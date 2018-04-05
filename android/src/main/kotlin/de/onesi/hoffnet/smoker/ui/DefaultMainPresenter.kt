@@ -35,14 +35,13 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
 
     private var lastState: State? = null
 
-    override fun bind(view: MainView?, state: Bundle?) {
+    override fun bind(view: MainView, state: Bundle?) {
         this.view = view
 
-        localPrefs.lastUsedAddress?.takeIf { it.isNotEmpty() }
-                ?.let {
-                    view?.serverAddress = it
-                    createServerController(it)
-                }
+        localPrefs.lastUsedAddress?.let {
+            view.serverAddress = it
+            createServerController(it)
+        }
 
         if (state != null) {
             state.getParcelable<StateParcelable>("last-state").state?.let {
@@ -52,6 +51,8 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     }
 
     override fun start() {
+        view?.activeLoading = false
+        view?.enableView(config = false, start = false, stop = false, reload = false)
     }
 
     override fun saveState(bundle: Bundle) {
@@ -97,6 +98,13 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     override fun onStopClicked() {
         view?.enableView(config = true, start = true, stop = false)
         stopPolling()
+    }
+
+    override fun onReloadClicked() {
+        view?.enableView(reload = false)
+        serverController?.state()
+                ?.subscribe(::handleState, ::handleStateError)
+                ?.also { disposables.add(it) }
     }
 
     private fun bindSmokerServer(address: CharSequence) {
@@ -196,7 +204,9 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
 
     private fun handleState(state: State) {
         lastState = state
+
         view?.currentState = state.ovenState.toString()
+        view?.enableView(reload = false)
 
         state.ovenState?.let {
             when (it) {
@@ -241,6 +251,8 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
                 START, BUSY, HEATING, COOLING, SMOKE -> {
                     startPollingState()
                     startPollingTemp()
+
+                    view?.enableView(stop = true)
                 }
 
                 AIR -> {
@@ -279,6 +291,8 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     private fun handleStateError(e: Throwable) {
         lastState = null
 
+        view?.enableView(config = false, start = false, stop = false, reload = true)
+
         when (e) {
             is SocketException, is UnknownHostException -> {
                 view?.currentState = "Smoker nicht erreichbar"
@@ -288,6 +302,8 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
                 view?.currentState = "Fehler: ${e.message}"
             }
         }
+
+        view?.enableView(config = false, start = false, stop = false)
     }
 
     private fun handleTemperature(temperature: Temperature) {

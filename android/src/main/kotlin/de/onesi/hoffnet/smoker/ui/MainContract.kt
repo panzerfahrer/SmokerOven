@@ -15,7 +15,8 @@ interface MainView : BaseView {
 
     fun enableView(config: Boolean? = null,
                    start: Boolean? = null,
-                   stop: Boolean? = null)
+                   stop: Boolean? = null,
+                   reload: Boolean? = null)
 
     var activeLoading : Boolean
 }
@@ -25,5 +26,6 @@ interface MainPresenter : BasePresenter<MainView> {
     fun onAddressEditorAction(actionId: Int): Boolean
     fun onStartClicked()
     fun onStopClicked()
+    fun onReloadClicked()
 
 }

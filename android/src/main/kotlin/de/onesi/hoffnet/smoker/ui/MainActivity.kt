@@ -37,6 +37,7 @@ class MainActivity : Activity(), MainView {
 
         btnStart.setOnClickListener { presenter.onStartClicked() }
         btnStop.setOnClickListener { presenter.onStopClicked() }
+        btnReload.setOnClickListener { presenter.onReloadClicked() }
     }
 
     override fun onStart() {
@@ -54,7 +55,7 @@ class MainActivity : Activity(), MainView {
         presenter.destroy()
     }
 
-    override fun enableView(config: Boolean?, start: Boolean?, stop: Boolean?) {
+    override fun enableView(config: Boolean?, start: Boolean?, stop: Boolean?, reload: Boolean?) {
         config?.let {
             editRoomTemp.isEnabled = it
             editObjectTemp.isEnabled = it
@@ -63,6 +64,7 @@ class MainActivity : Activity(), MainView {
 
         start?.let { btnStart.isEnabled = it }
         stop?.let { btnStop.isEnabled = it }
+        reload?.let { btnReload.visibility = if (it) View.VISIBLE else View.GONE }
     }
 
     override var serverAddress: CharSequence?

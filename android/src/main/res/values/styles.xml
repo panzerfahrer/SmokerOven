@@ -16,4 +16,8 @@
         <item name="layout_constraintTop_toBottomOf">@+id/table</item>
     </style>
 
+    <style name="Main.Button.Reload" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:src">@drawable/ic_refresh_black_24dp</item>
+    </style>
+
 </resources>

@@ -7,7 +7,7 @@ interface BaseView {
 }
 
 interface BasePresenter<V : BaseView> {
-    fun bind(view: V?, state: Bundle?)
+    fun bind(view: V, state: Bundle?)
     fun start()
     fun saveState(bundle: Bundle)
     fun destroy()
