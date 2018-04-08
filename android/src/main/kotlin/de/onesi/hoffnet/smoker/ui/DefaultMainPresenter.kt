@@ -175,12 +175,10 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     }
 
     private fun ensureLatestConfig() {
-        if (lastConfig == null) {
-            serverController?.let {
-                it.configuration()
-                        .subscribe(::handleConfig, ::handleConfigError)
-                        .also { disposables += it }
-            }
+        lastConfig?.let { handleConfig(it) } ?: serverController?.let {
+            it.configuration()
+                    .subscribe(::handleConfig, ::handleConfigError)
+                    .also { disposables += it }
         }
     }
 
