@@ -23,7 +23,10 @@ import javax.inject.Inject
 
 private val TAG = DefaultMainPresenter::class.java.simpleName
 
-private val IP_ADDRESS_PORT = (Patterns.IP_ADDRESS.pattern() + "(\\:\\d+)?").toRegex()
+private const val PORT_PATTERN = "\\:\\d{1,5}"
+private val DOMAIN_PATTERN = Patterns.DOMAIN_NAME.pattern()
+private val IP_PATTERN = Patterns.IP_ADDRESS.pattern()
+private val ADDRESS_PATTERN = "$DOMAIN_PATTERN|($IP_PATTERN($PORT_PATTERN)?)".toRegex()
 
 class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: SmokerServerFactory,
                                                private val localPrefs: LocalPreferences) : MainPresenter {
@@ -110,12 +113,12 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     }
 
     private fun bindSmokerServer(address: CharSequence) {
-        if (IP_ADDRESS_PORT matches address) {
+        if (ADDRESS_PATTERN matches address) {
             view?.serverAddressInputError = null
             localPrefs.lastUsedAddress = address.toString()
             createServerController(address)
         } else {
-            view?.serverAddressInputError = "Das ist keine IP Adresse"
+            view?.serverAddressInputError = "Das ist keine IP Adresse oder Domain"
         }
     }
 
@@ -137,7 +140,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
         val uri = try {
             Uri.parse("http://$address")
         } catch (e: Exception) {
-            view?.currentState = "Fehler: IP Adresse kann nicht verarbeitet werden."
+            view?.currentState = "Fehler: Adresse kann nicht verarbeitet werden."
             null
         }
 

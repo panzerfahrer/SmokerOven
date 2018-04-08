@@ -22,7 +22,7 @@
             android:id="@+id/editAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="IP Adresse"
+            android:hint="Adresse"
             android:imeOptions="actionGo"
             android:inputType="textUri|textNoSuggestions"
             android:maxLines="1"
