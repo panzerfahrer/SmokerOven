@@ -6,6 +6,8 @@ import de.onesi.hoffnet.web.data.Configuration
 import de.onesi.hoffnet.web.data.State
 import de.onesi.hoffnet.web.data.Temperature
 import io.reactivex.Flowable
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
@@ -34,17 +36,24 @@ interface SmokerServer {
 
 abstract class SmokerServerFactory {
 
+    private val client by lazy {
+        OkHttpClient.Builder()
+                .addNetworkInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+                .build()
+    }
+
     fun create(uri: Uri): SmokerServer {
         return Retrofit.Builder()
                 .baseUrl(uri.toString())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.createAsync())
                 .addConverterFactory(JacksonConverterFactory.create())
+                .client(client)
                 .also { onConfigure(it) }
                 .build()
                 .let { onCreate(it) }
     }
 
-    protected open fun onConfigure(builder: Retrofit.Builder) { }
+    protected open fun onConfigure(builder: Retrofit.Builder) {}
 
     protected abstract fun onCreate(retrofit: Retrofit): SmokerServer
 }
