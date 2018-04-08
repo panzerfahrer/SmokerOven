@@ -13,6 +13,7 @@ import de.onesi.hoffnet.states.OvenState.*
 import de.onesi.hoffnet.web.data.Configuration
 import de.onesi.hoffnet.web.data.State
 import de.onesi.hoffnet.web.data.Temperature
+import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
@@ -20,6 +21,7 @@ import io.reactivex.rxkotlin.plusAssign
 import java.net.SocketException
 import java.net.UnknownHostException
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private val TAG = DefaultMainPresenter::class.java.simpleName
@@ -156,6 +158,10 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
 
             serverController?.let {
                 it.loadingActive
+                        .delay {
+                            // delay stop signals because ContentLoadingProgessbar is too quick gone
+                            Flowable.timer(if (it) 0 else 850, TimeUnit.MILLISECONDS)
+                        }
                         .doOnEach { Log.d(TAG, "loading: $it") }
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe { view?.activeLoading = it }
