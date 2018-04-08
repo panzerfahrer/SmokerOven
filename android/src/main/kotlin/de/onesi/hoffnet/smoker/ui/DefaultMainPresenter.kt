@@ -16,6 +16,7 @@ import de.onesi.hoffnet.web.data.Temperature
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.plusAssign
 import java.net.SocketException
 import java.net.UnknownHostException
 import java.util.*
@@ -39,6 +40,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     private val disposables = CompositeDisposable()
 
     private var lastState: State? = null
+    private var lastConfig: Configuration? = null
 
     override fun bind(view: MainView, state: Bundle?) {
         this.view = view
@@ -152,11 +154,21 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
                         .doOnEach { Log.d(TAG, "loading: $it") }
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe { view?.activeLoading = it }
-                        .also { disposables.add(it) }
+                        .also { disposables += it }
 
                 it.state()
                         .subscribe(::handleState, ::handleStateError)
-                        .also { disposables.add(it) }
+                        .also { disposables += it }
+            }
+        }
+    }
+
+    private fun ensureLatestConfig() {
+        if (lastConfig == null) {
+            serverController?.let {
+                it.configuration()
+                        .subscribe(::handleConfig, ::handleConfigError)
+                        .also { disposables += it }
             }
         }
     }
@@ -172,7 +184,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     }
 
     private fun startPollingTemp() {
-        when (pollingStateDisposable?.isDisposed) {
+        when (pollingTempDisposable?.isDisposed) {
             null, true -> serverController?.let {
                 it.pollTemperature()
                         .subscribe(::handleTemperature, ::handleTemperatureError)
@@ -192,18 +204,25 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     }
 
     private fun handleConfig(config: Configuration) {
+        lastConfig = config
+
         view?.let { v ->
-            v.configObjectTemp = config.objectTemperature.toString()
-            v.configRoomTemp = config.roomTemperature.toString()
-            v.configTolerance = config.temperatureTolerance.toString()
+            v.configObjectTemp = config.objectTemperature?.toString()
+            v.configRoomTemp = config.roomTemperature?.toString()
+            v.configTolerance = config.temperatureTolerance?.toString()
         }
     }
 
     private fun handleConfigError(e: Throwable) {
+        Log.w(TAG, "config error", e)
+
+        lastConfig = null
         view?.let { v ->
-            v.configObjectTemp = "0"
-            v.configRoomTemp = "0"
-            v.configTolerance = "0"
+            v.currentState = "Fehler: ${e.message}"
+
+            v.configObjectTemp = null
+            v.configRoomTemp = null
+            v.configTolerance = null
         }
     }
 
@@ -245,6 +264,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
 
                 PREPAIRE, PREPAIRE_NOTHING, PREPAIRE_WAIT -> {
                     startPollingState()
+                    ensureLatestConfig()
 
                     view?.let {
                         // waiting for the next poll
@@ -256,6 +276,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
                 START, BUSY, HEATING, COOLING, SMOKE -> {
                     startPollingState()
                     startPollingTemp()
+                    ensureLatestConfig()
 
                     view?.enableView(stop = true)
                 }
@@ -263,6 +284,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
                 AIR -> {
                     startPollingState()
                     startPollingTemp()
+                    ensureLatestConfig()
 
                     Calendar.getInstance().apply {
                         time = state.timestamp
@@ -294,6 +316,8 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     }
 
     private fun handleStateError(e: Throwable) {
+        Log.w(TAG, "state error", e)
+
         lastState = null
 
         view?.enableView(config = false, start = false, stop = false, reload = true)
@@ -317,6 +341,8 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     }
 
     private fun handleTemperatureError(e: Throwable) {
+        Log.w(TAG, "temperature error", e)
+
         view?.currentObjectTemp = "-"
         view?.currentRoomTemp = "-"
     }
