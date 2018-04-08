@@ -23,6 +23,8 @@ import javax.inject.Inject
 
 private val TAG = DefaultMainPresenter::class.java.simpleName
 
+private val IP_ADDRESS_PORT = (Patterns.IP_ADDRESS.pattern() + "(\\:\\d+)?").toRegex()
+
 class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: SmokerServerFactory,
                                                private val localPrefs: LocalPreferences) : MainPresenter {
 
@@ -108,7 +110,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
     }
 
     private fun bindSmokerServer(address: CharSequence) {
-        if (Patterns.IP_ADDRESS.matcher(address).matches()) {
+        if (IP_ADDRESS_PORT matches address) {
             view?.serverAddressInputError = null
             localPrefs.lastUsedAddress = address.toString()
             createServerController(address)
