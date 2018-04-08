@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.onesi.hoffnet.smoker">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".SmokerApplication"
         android:allowBackup="false"
