@@ -50,6 +50,11 @@ class MainActivity : Activity(), MainView {
         presenter.saveState(outState)
     }
 
+    override fun onStop() {
+        super.onStop()
+        presenter.stop()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         presenter.destroy()

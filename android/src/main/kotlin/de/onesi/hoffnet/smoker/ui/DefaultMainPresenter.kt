@@ -51,23 +51,28 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
         }
 
         if (state != null) {
-            state.getParcelable<StateParcelable>("last-state").state?.let {
-                handleState(it)
-            }
+            lastState = state.getParcelable<StateParcelable>("last-state").state
         }
     }
 
     override fun start() {
         view?.activeLoading = false
         view?.enableView(config = false, start = false, stop = false, reload = false)
+
+        lastState?.let { handleState(it) }
     }
 
     override fun saveState(bundle: Bundle) {
         bundle.putParcelable("last-state", StateParcelable(lastState))
     }
 
+    override fun stop() {
+        disposeAll()
+    }
+
     override fun destroy() {
         disposeAll()
+        view = null
     }
 
     override fun onAddressEditorAction(actionId: Int): Boolean {
@@ -97,7 +102,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
                             handleConfig(it)
                             startPollingState()
                         }, ::handleConfigError)
-                        .also { disposables.add(it) }
+                        .also { disposables += it }
             }
         }
     }
@@ -111,7 +116,7 @@ class DefaultMainPresenter @Inject constructor(private val smokerServerFactory: 
         view?.enableView(reload = false)
         serverController?.state()
                 ?.subscribe(::handleState, ::handleStateError)
-                ?.also { disposables.add(it) }
+                ?.also { disposables += it }
     }
 
     private fun bindSmokerServer(address: CharSequence) {
