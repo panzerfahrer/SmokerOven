@@ -7,7 +7,7 @@
     <application
         android:name=".SmokerApplication"
         android:allowBackup="false"
-        android:theme="@style/Theme.AppCompat.Light">
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         <activity
             android:name=".ui.MainActivity"

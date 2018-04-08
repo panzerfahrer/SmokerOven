@@ -1,8 +1,8 @@
 package de.onesi.hoffnet.smoker.ui
 
-import android.app.Activity
 import android.content.Context
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import dagger.android.AndroidInjection
@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 private val TAG = MainActivity::class.java.simpleName
 
-class MainActivity : Activity(), MainView {
+class MainActivity : AppCompatActivity(), MainView {
 
     @Inject
     lateinit var presenter: MainPresenter
@@ -22,6 +22,8 @@ class MainActivity : Activity(), MainView {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
+        setSupportActionBar(toolbar)
+
         presenter.bind(this, savedInstanceState)
 
         textInputAddress.editText?.apply {
